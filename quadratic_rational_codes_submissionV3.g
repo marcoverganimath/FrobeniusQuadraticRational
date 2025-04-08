@@ -79,7 +79,7 @@ remInt:=function(n,m)
     else return RemInt(n,m); fi;
 end;
 
-pIrreducibleSemidirectFrobeniusFaithfulSemirational:=function(G,p)
+pIrreducibleSemidirectFrobeniusSemirational:=function(G,p)
     #returns the semidirect product of K\rtimes G where K is the irreducible F_pG-module and the action is Frobenius and semi-rational
     local I, IF, ISemiDirectFrobenius;
     I:=IrreducibleRepresentations(G, GF(p));
@@ -98,7 +98,7 @@ extensionsSG:=function(G,p)
     res:=[];
     I:=IrreducibleRepFrobeniusFaithfulSemirational(G,p);
     #since, even if we have more than one representation, the semidirect product is isomorphic to each other, we can take the first one
-    SG:=USRInt(pIrreducibleSemidirectFrobeniusFaithfulSemirational(G,p)[1]);
+    SG:=USRInt(pIrreducibleSemidirectFrobeniusSemirational(G,p)[1]);
     chi:=I[1];
     dim:=Size(G.1^chi);
     #we want to compute the numbers in [0..p-1] such that there exist an element x in G such that x^chi=i*(x^0)^chi
