@@ -80,7 +80,7 @@ remInt:=function(n,m)
 end;
 
 pIrreducibleSemidirectFrobeniusFaithfulSemirational:=function(G,p)
-    #returns the semidirect product of K\rtimes G where K is the irreducible F_pG-module and the action is Frobenius
+    #returns the semidirect product of K\rtimes G where K is the irreducible F_pG-module and the action is Frobenius and semi-rational
     local I, IF, ISemiDirectFrobenius;
     I:=IrreducibleRepresentations(G, GF(p));
     #frobenius representations
