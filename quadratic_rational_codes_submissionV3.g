@@ -143,6 +143,25 @@ counterExample:=function(G,p, v, w)
     #return Filtered(G, x->ForAll(I, rep->x^rep*v in Lv and x^rep*w in Lw and x^rep*(v-w) in Lvw) );
 end;
 
+checkingRemainingCases:=function()
+    local l, el; 
+    l:=[[[6,2],[1]*Z(7), [1]*Z(7), 7], 
+    [[6,2], [1]*Z(13), [1]*Z(13) ,13], 
+    [[24,11], [1,1]*Z(7),[1,1]*Z(7), 7], 
+    [[24,11],[1,1]*Z(13),[1,1]*Z(13),13], 
+    [[48,28],[1,1]*Z(7), [1,-1]*Z(7),7], 
+    [[120,5],[1,1]*Z(11),[1,1]*Z(11),11]];;
+for el in l2 do
+    G:=SmallGroup(el[1]);
+    v:=el[2];
+    w:=el[3];
+    p:=el[4];
+    Print("Consider the group ", StructureDescription(G), " having ", Size(IrreducibleRepFrobeniusFaithfulSemirational(G,p))  ," distinct irreducible GF(",p,") representations \n");
+    Print("Consider the vector v=", v, " and w=", w, " in VxW rtimes G with the two irreducible representations \n");
+    Print("The size of the normalizer of (v,w) in G is equal to ", Size(counterExample(G, p, v, w )), " that is strictly less than (p-1)/2=", (p-1)/2, "\n");
+    Print("\n\n\n");
+od;
+end;
 
 
 
