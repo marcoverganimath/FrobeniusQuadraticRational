@@ -144,14 +144,14 @@ counterExample:=function(G,p, v, w)
 end;
 
 checkingRemainingCases:=function()
-    local l, el; 
+    local l, el, G, v, w, p; 
     l:=[[[6,2],[1]*Z(7), [1]*Z(7), 7], 
     [[6,2], [1]*Z(13), [1]*Z(13) ,13], 
     [[24,11], [1,1]*Z(7),[1,1]*Z(7), 7], 
     [[24,11],[1,1]*Z(13),[1,1]*Z(13),13], 
     [[48,28],[1,1]*Z(7), [1,-1]*Z(7),7], 
     [[120,5],[1,1]*Z(11),[1,1]*Z(11),11]];;
-for el in l2 do
+for el in l do
     G:=SmallGroup(el[1]);
     v:=el[2];
     w:=el[3];
