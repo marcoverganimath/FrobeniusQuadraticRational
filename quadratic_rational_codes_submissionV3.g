@@ -140,7 +140,6 @@ counterExample:=function(G,p, v, w)
     fi;
     #we need to find the elements in G such that normalize v , w and acts as the multiplication of the same constant
     return Filtered(G, x->Exists(ZmodnZ(p), i->x^I[1]*v=i*v and x^I[2]*w=i*w));
-    #return Filtered(G, x->ForAll(I, rep->x^rep*v in Lv and x^rep*w in Lw and x^rep*(v-w) in Lvw) );
 end;
 
 checkingRemainingCases:=function()
