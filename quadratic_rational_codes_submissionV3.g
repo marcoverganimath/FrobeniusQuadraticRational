@@ -1,0 +1,300 @@
+Exists:=function(list, func)
+    #returns true if there exists an element in list such that func(element)=true
+    local l;
+    for l in list do if func(l)=true then return true; fi; od;
+    return false;
+end;
+
+isRepFrobenius:=function(G, r, p)
+    #returns false if there exists a non-trivial element in G such that 1 is an eigenvalue of x^representation 
+    return not Exists(G, x->not x=x^0 and Z(p)^0 in Eigenvalues(GF(p), x^r));
+end;
+
+maxCoprimeFactor:=function(m, p)
+    #returns the maximum coprime factor of m with p
+    return Maximum(Filtered(DivisorsInt(m), x->Gcd([x,p])=1));
+end;
+
+semidirectGroupRepresentation:=function(G, chi, p)
+    #returns the semidirect product of K\rtimes G where K is the irreducible F_pG-module and the action is given by chi
+    local gens, MatrixGroup, dim;
+    gens:=GeneratorsOfGroup(G);
+    #this computes the dimension of the representation
+    dim:=Size(gens[1]^chi);
+    MatrixGroup:=Group(List(gens, x->x^chi));
+    return SemidirectProduct(MatrixGroup, GF(p)^dim);
+end;
+
+isRepkEigenvalue:=function(G, r, p,k)
+    #retruns true if the k-eigenvalue property holds for the representation of G
+    #k-eigenvalue property of a G-module V holds if for all v in V there exists g in G and mu in GF(p) of order k such that g^r*v=mu*v
+    local dim, V, mu;
+    dim:=Size(G.1^r);
+    V:=FullRowSpace(GF(p), dim);
+    #pick an element of order k in GF(p)
+    mu:=Filtered(GF(p), x->Order(x)=k)[1];
+    return ForAll(V, v->Exists(G, g->g^r*v=mu*v));
+end;
+
+isRepSemirational:=function(G, r, p)
+    #the representation is "semi-rational" if (p-1)/2-eigenvalue property holds
+    return isRepkEigenvalue(G,r,p, (p-1)/2);
+end;
+
+IrreducibleRepFrobeniusFaithfulSemirational:=function(G,p)
+    #returns the irreducible representations of G that are Frobenius and semirational
+    local I;
+    I:=IrreducibleRepresentations(G, GF(p));
+    I:=Filtered(I, r->isRepFrobenius(G, r, p) and isRepSemirational(G, r, p));
+    return Filtered(I, chi->maxCoprimeFactor(
+    Size(semidirectGroupRepresentation(G, chi, p)), p)=Size(G));
+end;
+
+fieldCharacters:=function(G)
+    #returns the field of values of every irreducible (complex) character of G
+    return List(Irr(G), x->Field(Rationals, x));
+end;
+
+IsrSR:=function(G, r)
+    #this function checks if the group G is r-semi-rational
+    #In particular, it checks if the field of values of every irreducible character of G intersects trivially the field fixed by the Galois automorphism \sigma_r
+    #and if every field of values of every irreducible character of G has degree at most 2 over the rationals.
+    local n, U, F;
+    n:=Exponent(G);
+    U:=Units(ZmodnZ(n));
+    F:=NF(n, List(Subgroup(U, [ZmodnZObj(r,n)]), x->Int(x)));
+    return ForAll(fieldCharacters(G), f->Intersection(f, F)=Rationals and DegreeOverPrimeField(f)<=2);
+end;
+
+USRInt:=function(G)
+    #returns the semi-rationality of G, i.e. the set of integers r such that the group G is r-semi-rational
+    local n, U;
+    n:=Exponent(G);
+    U:=List(Units(ZmodnZ(n)), x->Int(x));
+    return Filtered(U, k->IsrSR(G,k));
+end;
+
+remInt:=function(n,m)
+    if RemInt(n,m)>m/2 then return RemInt(n,m)-m;
+    else return RemInt(n,m); fi;
+end;
+
+pIrreducibleSemidirectFrobeniusFaithfulSemirational:=function(G,p)
+    #returns the semidirect product of K\rtimes G where K is the irreducible F_pG-module and the action is Frobenius
+    local I, IF, ISemiDirectFrobenius;
+    I:=IrreducibleRepresentations(G, GF(p));
+    #frobenius representations
+    IF:=Filtered(I, r->isRepFrobenius(G, r, p) and isRepSemirational(G, r, p));
+    #semidirect product of frobenius representations
+    ISemiDirectFrobenius:=List(IF, chi->semidirectGroupRepresentation(G, chi, p));
+    return Filtered(ISemiDirectFrobenius, x->maxCoprimeFactor(Size(x), p)=Size(G));
+end;
+
+
+extensionsSG:=function(G,p)
+    #returns the (eventual) semi-rationality of K^n\rtimes G where K is the irreducible F_pG-module and the action is given by chi
+    #and the action is both Frobenius and sem-irational.
+    local I, i, x, l, eigenValues, res, chi, dim, SG, r, rat,el, ordersel;
+    res:=[];
+    I:=IrreducibleRepFrobeniusFaithfulSemirational(G,p);
+    #since, even if we have more than one representation, the semidirect product is isomorphic to each other, we can take the first one
+    SG:=USRInt(pIrreducibleSemidirectFrobeniusFaithfulSemirational(G,p)[1]);
+    chi:=I[1];
+    dim:=Size(G.1^chi);
+    #we want to compute the numbers in [0..p-1] such that there exist an element x in G such that x^chi=i*(x^0)^chi
+    eigenValues:=Filtered([0..p-1], i->Exists(G, y->y^chi=i*(y^0)^chi));
+    eigenValues:=List(eigenValues, x->ZmodnZObj(x,p));
+    #cAct:=List(Filtered(List(G, y->Filtered([0..p-1], i->y^chi=i*(y^0)^chi)), el->not el=[]), eel->eel[1]);
+    for r in SG do
+        l:=[];
+        Add(l, ZmodnZObj(r,p));
+        Append(l, eigenValues);
+        #we are verifying (2) of Lemma 4.9 where Group(l)=Z_G(x)<tau_r> and Group(eigenValues)=Z_G(x)
+        #observe that Z_G(x) does not depend on the non-trivial element x of G
+        if Size(Group(l))=p-1 and Size(Group(eigenValues)) in [p-1, (p-1)/2] then 
+            Add(res, r);
+        fi;
+    od;
+    #in order to display the result we want to compute the order of the elements in the semi-rationality
+    #and compute the rationality.
+    rat:=[];
+    el:=List(res, x->ZmodnZObj(x,Exponent(G)*p));
+    ordersel:=List(el, x->Order(x));
+    #we can remove remInt 
+    res:=List(res, x->remInt(x, Exponent(G)*p));
+    rat:=List(el, x->remInt(Int(el[1]^-1*x), Exponent(G)*p));
+    return [res, ordersel, rat];
+end;
+
+#this function computes the N_G((v,w)) where (v,w) in VxW V is the first irreducible F_pG-module Frobenius semi-rational and W is the second one
+#clearly, if the size of the output < (p-1)/2 the element (v,w) cannot be semi-rational and therefore, VxW \rtimes G cannot be semi-rational too
+
+counterExample:=function(G,p, v, w)
+    local I, U;
+    U:=Units(ZmodnZ(Exponent(G)));
+    I:=IrreducibleRepFrobeniusFaithfulSemirational(G,p);
+    if not Size(I)=2 then
+        #we have to check only if we have more than one representation
+        #we know that in those cases appear only two irreducible representations with same dimension
+        return false;
+    fi;
+    #we need to find the elements in G such that normalize v , w and acts as the multiplication of the same constant
+    return Filtered(G, x->Exists(ZmodnZ(p), i->x^I[1]*v=i*v and x^I[2]*w=i*w));
+    #return Filtered(G, x->ForAll(I, rep->x^rep*v in Lv and x^rep*w in Lw and x^rep*(v-w) in Lvw) );
+end;
+
+
+###second version checking rationality
+#first we check the extensionSG function
+l1:=[[[2,1],3, [-1]],
+    [[2,1],5, [-1]], 
+
+    [[4,1],3, [5]], 
+    [[4,1],5, [13]], 
+
+    [[6,2],5, [19]], 
+    [[6,2],7, [19]],
+    [[6,2], 13, [49]],
+
+    [[8,4],3, [5, -1]], 
+    [[8,4],5, [17, -1]],
+
+    [[12,1],5, [17,41]], 
+    [[12,1],7, []],
+    [[12,1], 13, []],
+
+    [[16,9], 3, [7,23]],
+    [[16,9],5, [31, 9]],
+
+    [[20,1], 3, [41, 49]],
+
+    [[24,3], 5, [7, 19] ],
+    [[24,3], 7, [13, 19]],
+    [[24,3], 13, []],
+
+    [[24,4], 5, [11, 49]],
+    [[24,4], 7, []],
+    [[24,4], 13, []],
+
+    [[24,11], 5, [-11, 19]],
+    [[24,11], 7, [19, 43]],
+    [[24,11], 13, [49, 79]],
+
+    [[48,18], 5, [31, 49]],
+    [[48,18], 7, []],
+    [[48,18], 13, []],
+
+    [[48,28], 5, [31, 41, 49]],
+    [[48,28], 7, [73, 113, 127]],
+    [[48,28], 13, []],
+
+    [[120,5], 7, []],
+    [[120,5], 11, [541, 529, 221, 331]],
+    [[120,5], 13, []],
+
+    [[240, 89], 7, []],
+    [[240, 89], 11, []],
+    [[240, 89], 13, []],
+    [[240, 89], 17, []]
+];
+
+l1Filtered:=[];
+
+for el in l1 do 
+    G:=SmallGroup(el[1]);
+    p:=el[2];
+    I:=IrreducibleRepFrobeniusFaithfulSemirational(G,p);
+    if Size(I)=0 then 
+        Print("The group ", StructureDescription(G), " has NO semi-rational frobenius representation over GF(", p ,") \n\n\n");
+    else
+        Add(l1Filtered, el);
+        Print("The group ", StructureDescription(G), " has ", Size(I), " semi-rational Frobenius representations over GF(", p ,") of dimension ", List(I, r->Size(G.1^r)) ," \n\n\n");
+        SG:=USRInt(pIrreducibleSemidirectFrobeniusFaithfulSemirational(G,p)[1]);
+        SG:=List(SG, x->remInt(x, Exponent(G)*p));
+        SGUnits:=List(SG, x->ZmodnZObj(x,Exponent(G)*p));
+        rat:=List(SGUnits, x->remInt(Int(SGUnits[1]^-1*x), Exponent(G)*p));
+        ordersel:=List(SGUnits, x->Order(x));
+        Print("Semirationality=", SG, "\n");
+        Print("Orders= ", ordersel, "\n");
+        Print("Rationality=", rat, " with orders ", List(rat, x->Order(ZmodnZObj(x,Exponent(G)*p))) , "\n" );
+
+        Print("The rationality is generated by ", el[3], " = ", Group(List(rat, x->ZmodnZObj(x, Exponent(G)*p)))=Group(List(el[3], x->ZmodnZObj(x, Exponent(G)*p)))  ,  "\n\n\n");
+    fi;
+od;
+
+Print(l1Filtered);
+##da controllare le seguenti razionalità
+l1Filtered:=[ [ [ 2, 1 ], 3, [ -1 ] ], 
+[ [ 2, 1 ], 5, [ -1 ] ], 
+
+[ [ 4, 1 ], 3, [ 5 ] ], 
+[ [ 4, 1 ], 5, [ 13 ] ],
+
+  [ [ 6, 2 ], 5, [ 19 ] ], 
+  [ [ 6, 2 ], 7, [ 19 ] ], 
+  [ [ 6, 2 ], 13, [ 49 ] ], 
+
+  [ [ 8, 4 ], 3, [ 5, -1 ] ],
+  [ [ 8, 4 ], 5, [ 9, 11 ] ], #different different extension
+
+  [ [ 12, 1 ], 5, [ 29, 41 ] ], #different extension
+
+  [ [ 16, 9 ], 3, [ 7, 23 ] ], 
+  [ [ 16, 9 ], 5, [ 31, 9 ] ],
+
+  [ [ 20, 1 ], 3, [ 41, 49 ] ], 
+
+  [ [ 24, 3 ], 5, [ 49, 19 ] ], #different extension
+  [ [ 24, 3 ], 7, [  ] ], #does not extend
+
+  [ [ 24, 4 ], 5, [ 11, 49 ] ],  
+
+  [ [ 24, 11 ], 5, [ -11, 19 ] ], 
+  [ [ 24, 11 ], 7, [ 19, 43 ] ],
+  [ [ 24, 11 ], 13, [ 49, 79 ] ], 
+
+  [ [ 48, 18 ], 5, [ 31, 49 ] ],
+
+  [ [ 48, 28 ], 5, [ 31, 41, 49 ] ],
+  [ [ 48, 28 ], 7, [  ] ], #does not extend
+
+  [ [ 120, 5 ], 11, [  ] ] ]; #does not extend
+
+
+
+for el in l1Filtered do
+    G:=SmallGroup(el[1]);
+    p:=el[2];
+    ext:=extensionsSG(G, p);
+    if ext[1]=[] then
+        Print("The GF(", p, ") module of ", StructureDescription(G), " DO NOT extends as follows \n");
+    else
+        Print("The GF(", p, ") module of ", StructureDescription(G), " extends as follows \n");
+        Print("Semi-rationality=", ext[1], "\n");
+        Print("Orders=", ext[2], "\n");
+        Print("Rationality=", ext[3], "\n");
+        Print("The rationality is generated by ", el[3], " = ", Group(List(ext[3], x->ZmodnZObj(x, Exponent(G)*p)))=Group(List(el[3], x->ZmodnZObj(x, Exponent(G)*p)))  ,  "\n\n\n");
+        Print("\n\n\n");
+    fi;
+od;
+#Here we present a list of [IdGroup, v, w, p] where v in V and w in W the two irreducible F_pG module such that the action is Frobenius and semi-rational
+#where the element (v,w) is not semi-rational in VxW\rtimes G. 
+l2:=[[[6,2],[1]*Z(7), [1]*Z(7), 7], 
+    [[6,2], [1]*Z(13), [1]*Z(13) ,13], 
+    [[24,11], [1,1]*Z(7),[1,1]*Z(7), 7], 
+    [[24,11],[1,1]*Z(13),[1,1]*Z(13),13], 
+    [[48,28],[1,1]*Z(7), [1,-1]*Z(7),7], 
+    [[120,5],[1,1]*Z(11),[1,1]*Z(11),11]];;
+for el in l2 do
+    G:=SmallGroup(el[1]);
+    v:=el[2];
+    w:=el[3];
+    p:=el[4];
+    Print("Consider the group ", StructureDescription(G), " having ", Size(IrreducibleRepFrobeniusFaithfulSemirational(G,p))  ," distinct irreducible GF(",p,") representations \n");
+    Print("Consider the vector v=", v, " and w=", w, " in VxW rtimes G with the two irreducible representations \n");
+    Print("The size of the normalizer of (v,w) in G is equal to ", Size(counterExample(G, p, v, w )), " that is strictly less than (p-1)/2=", (p-1)/2, "\n");
+    Print("\n\n\n");
+od;
+
+
+
