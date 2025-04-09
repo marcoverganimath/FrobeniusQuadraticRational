@@ -1,4 +1,4 @@
-main:=function()
+computations:=function()
 local listTable1, listTable2, el, H, p, ext, I, SG, SGUnits, rat, ordersel, listExtendedG;
 #Starting from Table 1 we check the existence of G=K\rtimes H such that G is quadratic rational.
 #and K is an irreducible F_pH-module (we test the (p-1)/2 -eigenvalue property).
