@@ -1,5 +1,5 @@
 computations:=function()
-local listTable1, listTable2, el, H, p, ext, I, SG, SGUnits, rat, ordersel, listExtendedG
+local listTable1, listTable2, el, H, p, ext, I, SG, SGUnits, rat, ordersel, listExtendedG;
 #Starting from Table 1 we check the existence of G=K\rtimes H such that G is quadratic rational.
 #and K is an irreducible F_pH-module (we test the (p-1)/2 -eigenvalue property).
 #In this list we present the IdGroup of the complement H and the characteristic p.
