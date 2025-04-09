@@ -155,9 +155,9 @@ for el in l do
     v:=el[2];
     w:=el[3];
     p:=el[4];
-    Print("Consider the group ", StructureDescription(G), " having ", Size(IrreducibleRepFrobeniusFaithfulSemirational(G,p))  ," distinct irreducible GF(",p,") representations \n");
-    Print("Consider the vector v=", v, " and w=", w, " in VxW rtimes G with the two irreducible representations \n");
-    Print("The size of the normalizer of (v,w) in G is equal to ", Size(counterExample(G, p, v, w )), " that is strictly less than (p-1)/2=", (p-1)/2, "\n");
+    Print("Consider the group H=", StructureDescription(G), " having ", Size(IrreducibleRepFrobeniusFaithfulSemirational(G,p))  ," distinct irreducible GF(",p,") representations \n");
+    Print("Consider the vectors v=", v, " and w=", w, " in VxW rtimes H with the two irreducible representations \n");
+    Print("The size of the B_G of (v,w) in G is equal to ", Size(counterExample(G, p, v, w )), " that is strictly less than (p-1)/2=", (p-1)/2, "\n");
     Print("\n\n\n");
 od;
 end;
