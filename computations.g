@@ -122,7 +122,7 @@ for el in listTable2 do
     else
         Print("The group ", StructureDescription(H), " has ", Size(I), " semi-rational Frobenius representation(s) over GF(", p ,") of dimension ", List(I, rep->Size(H.1^rep)) ," \n\n\n");
         #this function computes the semi-rationality of G 
-        SG:=USRInt(pIrreducibleSemidirectFrobeniusFaithfulSemirational(H,p)[1]);
+        SG:=USRInt(pIrreducibleSemidirectFrobeniusSemirational(H,p)[1]);
         SG:=List(SG, x->remInt(x, Exponent(H)*p));
         SGUnits:=List(SG, x->ZmodnZObj(x,Exponent(H)*p));
         rat:=List(SGUnits, x->remInt(Int(SGUnits[1]^-1*x), Exponent(H)*p));
